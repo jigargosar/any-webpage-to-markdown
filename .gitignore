@@ -1,0 +1,39 @@
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+*.local.json
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node/pnpm
+node_modules
+dist
+*.tsbuildinfo
+
+# WXT
+.output
+.wxt
+stats.html
+stats-*.json
+web-ext.config.ts
