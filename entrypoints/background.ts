@@ -7,7 +7,7 @@ export default defineBackground(() => {
       });
       if (tab?.id) {
         try {
-          await browser.tabs.sendMessage(tab.id, { type: 'convert' });
+          await browser.tabs.sendMessage(tab.id, { type: 'convert-and-copy' });
         } catch {
           // Content script not loaded yet — ignore
         }

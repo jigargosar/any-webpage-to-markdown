@@ -11,7 +11,7 @@ export default defineConfig({
     name: 'Any webpage to markdown converter',
     description:
       'Convert any webpage to clean markdown using Readability.js and Turndown',
-    permissions: ['activeTab'],
+    permissions: ['activeTab', 'clipboardWrite'],
     commands: {
       'convert-page': {
         suggested_key: {

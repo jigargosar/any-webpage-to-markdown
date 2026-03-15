@@ -61,7 +61,14 @@ function App() {
 
   useEffect(() => {
     convert(selectionOnly);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   const handleSelectionToggle = (value: boolean) => {
     setSelectionOnly(value);
@@ -72,7 +79,7 @@ function App() {
     if (!markdown) return '';
     if (frontmatter) {
       const date = new Date().toISOString().split('T')[0];
-      return `---\ntitle: "${title.replace(/"/g, '\\"')}"\nurl: "${url}"\ndate: ${date}\n---\n\n${markdown}`;
+      return `---\ntitle: "${title.replace(/"/g, '\\"')}"\nurl: "${url.replace(/"/g, '\\"')}"\ndate: ${date}\n---\n\n${markdown}`;
     }
     return markdown;
   };
@@ -81,7 +88,6 @@ function App() {
     const output = getOutput();
     await navigator.clipboard.writeText(output);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownload = () => {
@@ -101,6 +107,9 @@ function App() {
   };
 
   const renderMarkdown = (md: string) => {
+    const escapeAttr = (s: string) =>
+      s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
     let html = md
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -119,11 +128,17 @@ function App() {
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
     html = html.replace(
       /\[([^\]]+)\]\(([^)]+)\)/g,
-      '<a href="$2" target="_blank">$1</a>',
+      (_match, text: string, href: string) =>
+        `<a href="${escapeAttr(href)}" target="_blank">${text}</a>`,
     );
     html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
     html = html.replace(/^---$/gm, '<hr>');
+    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
     html = html.replace(/^[*-] (.+)$/gm, '<li>$1</li>');
+    html = html.replace(
+      /((?:<li>.*<\/li>\n?)+)/g,
+      '<ul>$1</ul>',
+    );
     html = html.replace(
       /^(?!<[hluobpc]|<\/|<li|<hr|<pre|<str|<em|<a )(.+)$/gm,
       '<p>$1</p>',
@@ -168,11 +183,7 @@ function App() {
         {/* View toggle */}
         <div className="flex">
           <button
-            className={`px-2 py-1 text-xs border cursor-pointer rounded-l-md transition-colors ${
-              viewMode === 'raw'
-                ? 'text-white'
-                : ''
-            }`}
+            className="px-2 py-1 text-xs border cursor-pointer rounded-l-md transition-colors"
             style={{
               background: viewMode === 'raw' ? 'oklch(0.4 0.1 250)' : 'oklch(0.25 0.01 260)',
               borderColor: viewMode === 'raw' ? 'oklch(0.45 0.1 250)' : 'oklch(0.35 0.02 260)',
