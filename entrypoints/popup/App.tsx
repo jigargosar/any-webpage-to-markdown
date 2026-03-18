@@ -36,11 +36,13 @@ function App() {
         setLoading(false);
         return;
       }
-      const result: ConvertResult = await browser.tabs.sendMessage(tab.id, {
+      const result: ConvertResult | undefined = await browser.tabs.sendMessage(tab.id, {
         type: 'convert',
         selectionOnly: useSelectionOnly,
       });
-      if (result.success && result.markdown) {
+      if (!result) {
+        setError('Content script not loaded. Try reloading the page.');
+      } else if (result.success && result.markdown) {
         setMarkdown(result.markdown);
         setTitle(result.title || '');
         setUrl(result.url || '');
