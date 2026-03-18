@@ -1,4 +1,15 @@
 export default defineBackground(() => {
+  async function ensureContentScript(tabId: number) {
+    try {
+      await browser.tabs.sendMessage(tabId, { type: 'ping' });
+    } catch {
+      await browser.scripting.executeScript({
+        target: { tabId },
+        files: ['/content-scripts/content.js'],
+      });
+    }
+  }
+
   browser.commands.onCommand.addListener(async (command) => {
     if (command === 'convert-page') {
       const [tab] = await browser.tabs.query({
@@ -7,9 +18,10 @@ export default defineBackground(() => {
       });
       if (tab?.id) {
         try {
+          await ensureContentScript(tab.id);
           await browser.tabs.sendMessage(tab.id, { type: 'convert-and-copy' });
         } catch {
-          // Content script not loaded yet — ignore
+          // Cannot access page (chrome://, etc.)
         }
       }
     }

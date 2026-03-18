@@ -37,13 +37,37 @@ function App() {
         return;
       }
 
-      const result: ConvertResult | undefined = await browser.tabs.sendMessage(tab.id, {
-        type: 'convert',
-        selectionOnly: useSelectionOnly,
-      });
+      let result: ConvertResult | undefined;
+      try {
+        result = await browser.tabs.sendMessage(tab.id, {
+          type: 'convert',
+          selectionOnly: useSelectionOnly,
+        });
+      } catch {
+        // Content script not injected — inject it and retry
+        try {
+          await browser.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['/content-scripts/content.js'],
+          });
+          result = await browser.tabs.sendMessage(tab.id, {
+            type: 'convert',
+            selectionOnly: useSelectionOnly,
+          });
+        } catch (injectErr) {
+          const msg = injectErr instanceof Error ? injectErr.message : '';
+          setError(
+            msg.includes('Cannot access') || msg.includes('permission')
+              ? 'Cannot access this page (chrome://, Web Store, etc.)'
+              : 'Content script not loaded. Try reloading the page.',
+          );
+          setLoading(false);
+          return;
+        }
+      }
 
       if (!result) {
-        setError('Content script not loaded. Try reloading the page.');
+        setError('No response from content script. Try reloading the page.');
       } else if (result.success && result.markdown) {
         setMarkdown(result.markdown);
         setTitle(result.title || '');
@@ -53,11 +77,7 @@ function App() {
       }
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message.includes('Receiving end does not exist')
-            ? 'Cannot access this page. Try reloading the page first.'
-            : err.message
-          : 'Failed to convert page',
+        err instanceof Error ? err.message : 'Failed to convert page',
       );
     }
     setLoading(false);
