@@ -2,7 +2,7 @@
   "name": "any-webpage-to-markdown",
   "description": "Convert any webpage to clean markdown using Readability.js and Turndown",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
