@@ -63,16 +63,17 @@ export default defineContentScript({
       return { success: true as const, markdown, title, url: window.location.href };
     }
 
-    browser.runtime.onMessage.addListener((message) => {
+    browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (message.type === 'convert') {
         try {
-          return Promise.resolve(convertPage(message.selectionOnly === true));
+          sendResponse(convertPage(message.selectionOnly === true));
         } catch (err) {
-          return Promise.resolve({
+          sendResponse({
             success: false,
             error: err instanceof Error ? err.message : String(err),
           });
         }
+        return true;
       }
 
       if (message.type === 'convert-and-copy') {
@@ -83,13 +84,14 @@ export default defineContentScript({
               // clipboard write may fail without user gesture
             });
           }
-          return Promise.resolve(result);
+          sendResponse(result);
         } catch (err) {
-          return Promise.resolve({
+          sendResponse({
             success: false,
             error: err instanceof Error ? err.message : String(err),
           });
         }
+        return true;
       }
     });
   },

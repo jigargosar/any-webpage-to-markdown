@@ -22,13 +22,6 @@ function App() {
   const [selectionOnly, setSelectionOnly] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const sendConvert = async (tabId: number, selectionOnly: boolean): Promise<ConvertResult | undefined> => {
-    return browser.tabs.sendMessage(tabId, {
-      type: 'convert',
-      selectionOnly,
-    });
-  };
-
   const convert = useCallback(async (useSelectionOnly: boolean) => {
     setLoading(true);
     setError('');
@@ -44,17 +37,10 @@ function App() {
         return;
       }
 
-      let result: ConvertResult | undefined;
-      try {
-        result = await sendConvert(tab.id, useSelectionOnly);
-      } catch {
-        // Content script not injected yet — inject it and retry
-        await browser.scripting.executeScript({
-          target: { tabId: tab.id },
-          files: ['/content-scripts/content.js'],
-        });
-        result = await sendConvert(tab.id, useSelectionOnly);
-      }
+      const result: ConvertResult | undefined = await browser.tabs.sendMessage(tab.id, {
+        type: 'convert',
+        selectionOnly: useSelectionOnly,
+      });
 
       if (!result) {
         setError('Content script not loaded. Try reloading the page.');
@@ -68,8 +54,8 @@ function App() {
     } catch (err) {
       setError(
         err instanceof Error
-          ? err.message.includes('Cannot access')
-            ? 'Cannot access this page (chrome://, Web Store, etc.)'
+          ? err.message.includes('Receiving end does not exist')
+            ? 'Cannot access this page. Try reloading the page first.'
             : err.message
           : 'Failed to convert page',
       );
